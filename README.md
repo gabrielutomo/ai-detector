@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Image Detector 🔍
 
-## Getting Started
+Web app untuk mendeteksi apakah sebuah gambar dibuat oleh **AI** atau merupakan **gambar nyata**, menggunakan **Convolutional Neural Network (CNN)**.
 
-First, run the development server:
+**© 2025 Gabriel Adetya Utomo**
+
+---
+
+## Tech Stack
+
+| Layer | Teknologi |
+|-------|-----------|
+| Frontend | Next.js 16, React 19, TypeScript |
+| Backend | Python FastAPI, TensorFlow/Keras |
+| Model | CNN (Conv2D + BatchNorm + Dropout) |
+| Dataset | [CIFAKE - Kaggle](https://www.kaggle.com/datasets/birdy654/cifake-real-and-ai-generated-synthetic-images) |
+
+---
+
+## Cara Menjalankan
+
+### 1. Setup Backend (Python)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd backend
+pip install -r requirements.txt
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Setup Kaggle API** (untuk download dataset):
+1. Login ke [kaggle.com](https://kaggle.com) → Account → API → Create New Token
+2. Simpan `kaggle.json` ke `C:\Users\<username>\.kaggle\kaggle.json`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Training model CNN:**
+```bash
+python train_model.py
+# Proses: download dataset → training (~10-30 menit) → simpan model ke model/cnn_model.h5
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Jalankan server:**
+```bash
+uvicorn main:app --reload --port 8000
+```
 
-## Learn More
+### 2. Setup Frontend (Next.js)
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Di root project
+npm install
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Buka [http://localhost:3000](http://localhost:3000)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Struktur Project
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+ai-detector/
+├── app/
+│   ├── api/detect/route.ts   # Next.js API proxy ke backend
+│   ├── globals.css           # Design system (dark theme)
+│   ├── layout.tsx
+│   └── page.tsx              # Halaman utama (drag & drop UI)
+├── backend/
+│   ├── main.py               # FastAPI server
+│   ├── train_model.py        # Script training CNN
+│   ├── requirements.txt
+│   └── model/
+│       └── cnn_model.h5      # Model tersimpan (setelah training)
+└── README.md
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Arsitektur CNN
+
+```
+Input (64×64×3)
+  → Conv2D(32) + BN + Conv2D(32) + BN + MaxPool + Dropout(0.25)
+  → Conv2D(64) + BN + Conv2D(64) + BN + MaxPool + Dropout(0.25)
+  → Conv2D(128) + BN + Conv2D(128) + BN + MaxPool + Dropout(0.4)
+  → Flatten → Dense(256) + BN + Dropout(0.5)
+  → Dense(1, sigmoid)  ← 0=Real, 1=AI
+```
+
+## API Endpoint
+
+```
+POST /predict
+Content-Type: multipart/form-data
+Body: file=<image>
+
+Response:
+{
+  "label": "AI Generated" | "Real Image",
+  "confidence": 0.92,
+  "raw_score": 0.92,
+  "is_ai": true
+}
+```

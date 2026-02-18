@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# backend
+backend/venv/
+backend/dataset/
+backend/__pycache__/
+backend/*.zip
+backend/model/*.png
+!backend/model/cnn_model.h5
+!backend/model/.gitkeep
